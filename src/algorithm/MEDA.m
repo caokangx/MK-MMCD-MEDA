@@ -1,4 +1,4 @@
-function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
+function [Acc,acc_iter,Beta,Yt_pred] = MEDA(Xs,Ys,Xt,Yt,options)
 
 % Reference:
 %% Jindong Wang, Wenjie Feng, Yiqiang Chen, Han Yu, Meiyu Huang, Philip S.
@@ -46,19 +46,16 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
     if ~isfield(options,'d')
         options.d = 20;
     end
-    if ~isfield(options,'gamma')
-        options.gamma = 0.4;
-    end
 
     % Manifold feature learning
     [Xs_new,Xt_new,~] = GFK_Map(Xs,Xt,options.d);
-    Xs = double(Xs_new'); %行变列
-    Xt = double(Xt_new'); %行变列
+    Xs = double(Xs_new');
+    Xt = double(Xt_new');
 
     X = [Xs,Xt];
     n = size(Xs,2);
     m = size(Xt,2);
-    C = length(unique(Ys)); %类数量
+    C = length(unique(Ys));
     acc_iter = [];
     
     YY = [];
@@ -77,7 +74,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         manifold.NeighborMode = 'KNN';
         manifold.WeightMode = 'Cosine';
         W = lapgraph(X',manifold);
-        Dw = diag(sparse(sqrt(1 ./ sum(W)))); % D的-1/2次方，这么写计算的快
+        Dw = diag(sparse(sqrt(1 ./ sum(W))));
         L = eye(n + m) - Dw * W * Dw;
     else
         L = 0;
@@ -85,55 +82,34 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
 
     % Generate soft labels for the target domain
     knn_model = fitcknn(X(:,1:n)',Ys,'NumNeighbors',1);
-    Cls = knn_model.predict(X(:,n + 1:end)'); % predict Xt
+    Cls = knn_model.predict(X(:,n + 1:end)');
 
     % Construct kernel
     K = kernel_meda('rbf',X,sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
-
-    % multi kernel
-%     K = multi_kernel(X, sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
-    
     E = diag(sparse([ones(n,1);zeros(m,1)]));
 
     for t = 1 : options.T
         % Estimate mu
-        mu = estimate_mu(Xs',Ys,Xt',Cls);
+%         mu = estimate_mu(Xs',Ys,Xt',Cls);
+        mu = options.mu;
         % Construct MMD matrix
         e = [1 / n * ones(n,1); -1 / m * ones(m,1)];
-        M0 = e * e' * length(unique(Ys));
-        Mc = 0;
-        % Z0
-        Z = [-1/n^2 * ones(n) + diag(1/n * ones(n,1)), zeros(n,m);
-             zeros(m,n)                              , 1/m^2 * ones(m) + diag(-1/m * ones(m,1))];
-
+        M = e * e' * length(unique(Ys));
+        N = 0;
         for c = reshape(unique(Ys),1,length(unique(Ys)))
             e = zeros(n + m,1);
-            e(Ys == c) = 1 / length(find(Ys == c));  % 1 / Nsc
-            e(n + find(Cls == c)) = -1 / length(find(Cls == c)); % - 1 / Ntc
+            e(Ys == c) = 1 / length(find(Ys == c));
+            e(n + find(Cls == c)) = -1 / length(find(Cls == c));
             e(isinf(e)) = 0;
-            Mc = Mc + e * e';
-            
-            Nsc = length(find(Ys == c));
-            Ntc = length(find(Cls == c));
-            
-            Ys_logical_matrix = (Ys == c) * (Ys == c)';
-            Yt_logical_matrix = (Cls == c) * (Cls == c)';
-
-            Zc = [Ys_logical_matrix .* (-1/Nsc^2 * ones(n) + diag(1/Nsc * ones(n,1))), zeros(n,m);
-                  zeros(m,n)                                                         ,Yt_logical_matrix .* (1/Ntc^2 * ones(m) + diag(-1/Ntc * ones(m,1)))];
-            Zc(isnan(Zc)) = 0;
-            Z = Z + Zc;
+            N = N + e * e';
         end
-        M = (1 - mu) * M0 + mu * Mc;
-        V = M + options.gamma * Z;
-        % norm function has bug, so we compute another way
-        V = V / sqrt(sumsqr(V));
-        
-        % Multi Kernel MMCD
-        Beta = ((E + options.lambda * V + options.rho * L) * K + options.eta * speye(n + m,n + m)) \ (E * YY);
+        M = (1 - mu) * M + mu * N;
+        M = M / norm(M,'fro');
 
+        % Compute coefficients vector Beta
+        Beta = ((E + options.lambda * M + options.rho * L) * K + options.eta * speye(n + m,n + m)) \ (E * YY);
         F = K * Beta;
-        [~,Cls] = max(F,[],2); % predict Xt
+        [~,Cls] = max(F,[],2);
 
         %% Compute accuracy
         Acc = numel(find(Cls(n+1:end)==Yt)) / m;
@@ -161,5 +137,4 @@ function K = kernel_meda(ker,X,sigma)
         otherwise
             error(['Unsupported kernel ' ker])
     end
-    
 end

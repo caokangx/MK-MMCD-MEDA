@@ -86,6 +86,10 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
     % Generate soft labels for the target domain
     knn_model = fitcknn(X(:,1:n)',Ys,'NumNeighbors',1);
     Cls = knn_model.predict(X(:,n + 1:end)'); % predict Xt
+    
+    % neural network     
+    
+    % TCA 去初始化Yt， 
 
     % Construct kernel
     K = kernel_meda('rbf',X,sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
@@ -97,8 +101,8 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
 
     for t = 1 : options.T
         % Estimate mu
-%         mu = estimate_mu(Xs',Ys,Xt',Cls);
-        mu = options.mu;
+        mu = estimate_mu(Xs',Ys,Xt',Cls);
+%         mu = options.mu;
         % Construct MMD matrix
         e = [1 / n * ones(n,1); -1 / m * ones(m,1)];
         M0 = e * e' * length(unique(Ys));
@@ -131,7 +135,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         V = V / sqrt(sumsqr(V));
         
         % Multi Kernel MMCD
-        Beta = ((E + options.lambda * V + options.rho * L) * K + options.eta * speye(n + m,n + m)) \ (E * YY);
+        Beta = ((E + options.lambda * V + options.rho * L ) * K + options.eta * speye(n + m,n + m)) \ (E * YY);
 
         F = K * Beta;
         [~,Cls] = max(F,[],2); % predict Xt

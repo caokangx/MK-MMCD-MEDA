@@ -90,8 +90,8 @@ function [Acc,acc_iter,Beta,Yt_pred] = MEDA(Xs,Ys,Xt,Yt,options)
 
     for t = 1 : options.T
         % Estimate mu
-%         mu = estimate_mu(Xs',Ys,Xt',Cls);
-        mu = options.mu;
+        mu = estimate_mu(Xs',Ys,Xt',Cls);
+%         mu = options.mu;
         % Construct MMD matrix
         e = [1 / n * ones(n,1); -1 / m * ones(m,1)];
         M = e * e' * length(unique(Ys));

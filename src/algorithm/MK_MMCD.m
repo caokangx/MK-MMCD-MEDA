@@ -25,7 +25,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
 %%%% Yt_pred  :  Prediction labels for target domain
 
 %% Algorithm starts here
-    fprintf('MEDA starts...\n');
+    fprintf('MK_MMCD starts...\n');
     
     %% Load algorithm options
     if ~isfield(options,'p')
@@ -148,7 +148,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
     end
     Yt_pred = Cls;
     Acc = max(acc_iter);
-    fprintf('MEDA ends!\n');
+    fprintf('MK_MMCD ends!\n');
 end
 
 function K = kernel_meda(ker,X,sigma)

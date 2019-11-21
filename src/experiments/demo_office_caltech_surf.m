@@ -8,8 +8,7 @@ for i = 1 : 4
         end
         src = str_domains{i};
         tgt = str_domains{j};
-%         src = 'Caltech10';
-%         tgt = 'webcam';
+
         load(['data/' src '_SURF_L10.mat']);     % source domain
         fts = fts ./ repmat(sum(fts,2),1,size(fts,2)); %每一维度做均值
         Xs = zscore(fts,1);    clear fts   %标准化（归一化）

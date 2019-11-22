@@ -130,13 +130,17 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
             Z = Z + Zc;
         end
         M = (1 - mu) * M0 + mu * Mc;
-        V = M + options.gamma * Z;
+        V = M + options.gamma * (Z * X' * X * Z);
         % norm function has bug, so we compute another way
         V = V / sqrt(sumsqr(V));
         
         % Multi Kernel MMCD
         Beta = ((E + options.lambda * V + options.rho * L ) * K + options.eta * speye(n + m,n + m)) \ (E * YY);
 
+        % compute MMD distance 
+        MMD_distance = trace(Beta' * K * Mc * K * Beta);
+        % compute MMCD distance
+        MMCD_distance = norm(Beta' * K * Z * K * Beta, 'fro')^2;
         F = K * Beta;
         [~,Cls] = max(F,[],2); % predict Xt
 
@@ -144,7 +148,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         Acc = numel(find(Cls(n+1:end)==Yt)) / m;
         Cls = Cls(n+1:end);
         acc_iter = [acc_iter;Acc];
-        fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f\n',t,mu,Acc);
+        fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f,MMD=%f,MMCD=%f\n',t,mu,Acc,MMD_distance,MMCD_distance);
     end
     Yt_pred = Cls;
     Acc = max(acc_iter);

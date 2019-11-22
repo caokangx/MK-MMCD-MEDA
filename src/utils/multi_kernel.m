@@ -7,10 +7,7 @@ function MK = multi_kernel(X, Sigma)
     sam_kernel_instance = sam_kernel(X, Sigma);
     
     % TODO: get beta according to equation in DAN
-    beta = [0.3, 0.3, 0.4];
-    
-    % expanding beta size to align with sample size
-%     beta = kron(beta, ones(size(X, 2), size(X, 2)));
+    beta = [0, 0.1, 0.9];
     
     MK = beta(1) * linear_kernel_instance + beta(2) * rbf_kernel_instance + beta(3) * sam_kernel_instance;
 end

@@ -27,9 +27,9 @@ for i = 1 : 2
         options.p = 10;
         options.lambda = 10.0;
         options.eta = 0.1;
-        options.T = 20;
-        options.gamma = 0.1;
-%         options.mu = 0.6;
+        options.T = 10;
+        options.gamma = 20;
+        options.mu = 0.6;
 %         [Acc,~,~,~] = MEDA(Xs',Ys,Xt',Yt,options);
         [Acc,~,~,~] = MK_MMCD(Xs',Ys,Xt',Yt,options);
         fprintf('%s --> %s: %.2f accuracy \n\n', src, tar, Acc * 100);

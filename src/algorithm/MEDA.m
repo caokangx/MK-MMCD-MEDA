@@ -115,7 +115,11 @@ function [Acc,acc_iter,Beta,Yt_pred] = MEDA(Xs,Ys,Xt,Yt,options)
         Acc = numel(find(Cls(n+1:end)==Yt)) / m;
         Cls = Cls(n+1:end);
         acc_iter = [acc_iter;Acc];
-        fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f\n',t,mu,Acc);
+        
+        % compute MMD distance 
+        MMD_distance = trace(Beta' * K * M * K * Beta);
+        
+        fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f,MMD=%f\n',t,mu,Acc,MMD_distance);
     end
     Yt_pred = Cls;
     Acc = max(acc_iter);

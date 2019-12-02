@@ -1,3 +1,5 @@
+## 若公式挂掉了请用vscode预览
+
 # 实验公式
 
 $$f=\underset{f\in\sum^n _{i=1}}{arg\,min}\quad l(f(g(x_i)),y_i)+η||f||^2_K +λ\overline{D_f}(D_s,D_t)+ρR_f (D_s,D_t)$$

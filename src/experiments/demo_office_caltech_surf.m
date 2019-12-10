@@ -26,8 +26,8 @@ for i = 1 : 4
         options.lambda = 10.0;
         options.eta = 0.1;
         options.T = 10;
-        options.gamma = 0.1;
-        options.mu = 1;
+        options.gamma = 0.15;
+        options.mu = 0.8;
 %         [Acc,~,~,~] = MEDA(Xs,Ys,Xt,Yt,options);
         [Acc,~,~,~] = MK_MMCD(Xs,Ys,Xt,Yt,options);
         fprintf('%s --> %s: %.2f accuracy \n\n', src, tgt, Acc * 100);

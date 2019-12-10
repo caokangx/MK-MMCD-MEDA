@@ -58,13 +58,13 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
     
     % Manifold feature learning
     [Xs_new,Xt_new,~] = GFK_Map(Xs,Xt,options.d);
-    Xs = double(Xs_new'); %行变�?
-    Xt = double(Xt_new'); %行变�?
+    Xs = double(Xs_new'); %行变�?
+    Xt = double(Xt_new'); %行变�?
 
     X = [Xs,Xt];
     n = size(Xs,2);
     m = size(Xt,2);
-    C = length(unique(Ys)); %类数�?
+    C = length(unique(Ys)); %类数�?
     acc_iter = [];
     
     YY = [];
@@ -83,7 +83,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         manifold.NeighborMode = 'KNN';
         manifold.WeightMode = 'Cosine';
         W = lapgraph(X',manifold);
-        Dw = diag(sparse(sqrt(1 ./ sum(W)))); % D�?-1/2次方，这么写计算的快
+        Dw = diag(sparse(sqrt(1 ./ sum(W)))); % D�?-1/2次方，这么写计算的快
         L = eye(n + m) - Dw * W * Dw;
     else
         L = 0;
@@ -92,13 +92,13 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
     % Generate soft labels for the target domain
       knn_model = fitcknn(X(:,1:n)',Ys,'NumNeighbors',1);
       Cls = knn_model.predict(X(:,n + 1:end)'); % predict Xt
-    % Linear ���Է�����     
+    % Linear ���Է�����     
 %       model = train(Ys,sparse(X(:,1:n)'),'-s 2 -c 0.7 -q 1');
 %       [Cls,~] = predict(Yt,sparse(X(:,n+1:end)'),model);
       
     % neural network     
     
-    % TCA 去初始化Yt�? 
+    % TCA 去初始化Yt�? 
 
     % Construct kernel
 %     K = kernel_meda('rbf',X,sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
@@ -161,7 +161,7 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         Acc = numel(find(Cls(n+1:end)==Yt)) / m;
         
                
-        % ���
+        % ���
         Cls = Cls(n+1:end);
         acc_iter = [acc_iter;Acc];
         fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f,MMD=%f,MMCD=%f\n',t,mu,Acc,MMD_distance,MMCD_distance);

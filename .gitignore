@@ -1,2 +1,6 @@
 **/~$(*).xlsx
 **/*.m~
+data/cross-dataset
+data/imageCLEF_resnet50
+data/Animals-with-Attributes
+data/.DS_Store

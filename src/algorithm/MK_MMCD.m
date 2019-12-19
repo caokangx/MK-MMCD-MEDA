@@ -24,6 +24,8 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
 %%%% Beta     :  Cofficient matrix
 %%%% Yt_pred  :  Prediction labels for target domain
 
+%% Load algorithm options
+    addpath(genpath('liblinear/matlab'));
 %% Algorithm starts here
     fprintf('MK_MMCD starts...\n');
     
@@ -47,18 +49,22 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         options.d = 20;
     end
     if ~isfield(options,'gamma')
-        options.gamma = 0.4;
+        options.gamma = 0.1;
     end
-
+    if ~isfield(options,'delta')
+        options.gamma = 0;
+    end
+    MMCD_distance = inf;
+    
     % Manifold feature learning
     [Xs_new,Xt_new,~] = GFK_Map(Xs,Xt,options.d);
-    Xs = double(Xs_new'); %行变列
-    Xt = double(Xt_new'); %行变列
+    Xs = double(Xs_new'); %行变�?
+    Xt = double(Xt_new'); %行变�?
 
     X = [Xs,Xt];
     n = size(Xs,2);
     m = size(Xt,2);
-    C = length(unique(Ys)); %类数量
+    C = length(unique(Ys)); %类数�?
     acc_iter = [];
     
     YY = [];
@@ -77,25 +83,28 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         manifold.NeighborMode = 'KNN';
         manifold.WeightMode = 'Cosine';
         W = lapgraph(X',manifold);
-        Dw = diag(sparse(sqrt(1 ./ sum(W)))); % D的-1/2次方，这么写计算的快
+        Dw = diag(sparse(sqrt(1 ./ sum(W)))); % D�?-1/2次方，这么写计算的快
         L = eye(n + m) - Dw * W * Dw;
     else
         L = 0;
     end
 
     % Generate soft labels for the target domain
-    knn_model = fitcknn(X(:,1:n)',Ys,'NumNeighbors',1);
-    Cls = knn_model.predict(X(:,n + 1:end)'); % predict Xt
-    
+      knn_model = fitcknn(X(:,1:n)',Ys,'NumNeighbors',1);
+      Cls = knn_model.predict(X(:,n + 1:end)'); % predict Xt
+    % Linear ���Է�����     
+%       model = train(Ys,sparse(X(:,1:n)'),'-s 2 -c 0.7 -q 1');
+%       [Cls,~] = predict(Yt,sparse(X(:,n+1:end)'),model);
+      
     % neural network     
     
-    % TCA 去初始化Yt， 
+    % TCA 去初始化Yt�? 
 
     % Construct kernel
-    K = kernel_meda('rbf',X,sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
+%     K = kernel_meda('rbf',X,sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
 
     % multi kernel
-%     K = multi_kernel(X, sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
+    K = multi_kernel(X, sqrt(sum(sum(X .^ 2).^0.5)/(n + m)));
     
     E = diag(sparse([ones(n,1);zeros(m,1)]));
 
@@ -108,8 +117,11 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         M0 = e * e' * length(unique(Ys));
         Mc = 0;
         % Z0
-        Z = [-1/n^2 * ones(n) + diag(1/n * ones(n,1)), zeros(n,m);
+        Z0 = [-1/n^2 * ones(n) + diag(1/n * ones(n,1)), zeros(n,m);
              zeros(m,n)                              , 1/m^2 * ones(m) + diag(-1/m * ones(m,1))];
+        Z=0;
+        
+        H = eye(n+m) - ones(n+m)/(n+m);
 
         for c = reshape(unique(Ys),1,length(unique(Ys)))
             e = zeros(n + m,1);
@@ -129,8 +141,8 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
             Zc(isnan(Zc)) = 0;
             Z = Z + Zc;
         end
-        M = (1 - mu) * M0 + mu * Mc;
-        V = M + options.gamma * (Z * X' * X * Z);
+%        M = (1 - mu) * M0 + mu * Mc;
+        V = (1 - mu) * (M0 + options.gamma * (Z0 * K * K * Z0)) + mu * (Mc + options.gamma * (Z * K * K * Z)) + options.delta * H;
         % norm function has bug, so we compute another way
         V = V / sqrt(sumsqr(V));
         
@@ -140,12 +152,16 @@ function [Acc,acc_iter,Beta,Yt_pred] = MK_MMCD(Xs,Ys,Xt,Yt,options)
         % compute MMD distance 
         MMD_distance = trace(Beta' * K * Mc * K * Beta);
         % compute MMCD distance
+        MMCD_distance1 = MMCD_distance;
         MMCD_distance = norm(Beta' * K * Z * K * Beta, 'fro')^2;
+        
+        % Compute accuracy Acc1
         F = K * Beta;
         [~,Cls] = max(F,[],2); % predict Xt
-
-        %% Compute accuracy
         Acc = numel(find(Cls(n+1:end)==Yt)) / m;
+        
+               
+        % ���
         Cls = Cls(n+1:end);
         acc_iter = [acc_iter;Acc];
         fprintf('Iteration:[%02d]>>mu=%.2f,Acc=%f,MMD=%f,MMCD=%f\n',t,mu,Acc,MMD_distance,MMCD_distance);

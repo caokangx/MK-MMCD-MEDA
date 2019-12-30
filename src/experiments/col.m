@@ -18,13 +18,14 @@ for i = 1 : 2
 
     % meda
     options.d = 20;
-    options.rho = 1.0;
+    options.rho = 0.1;
     options.p = 10;
     options.lambda = 10.0;
     options.eta = 0.1;
-    options.T = 10;
-    options.gamma = 0.5;
+    options.T = 15;
+    options.gamma = 0.1;
     options.mu = 0.6;
+    options.delta = 0.01;
 %     [Acc,~,~,~] = MEDA(Xs',Ys,Xt',Yt,options);
     [Acc,~,~,~] = MK_MMCD(Xs',Ys,Xt',Yt,options);
     fprintf('COIL_%s %.2f accuracy \n\n', src, Acc * 100);
